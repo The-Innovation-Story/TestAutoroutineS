@@ -13,11 +13,14 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.trajectory.TrajectoryUtil;
 import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
@@ -26,6 +29,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -40,6 +46,7 @@ import java.util.List;
 public class RobotContainer {
         // The robot's subsystems
         private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+        String trajectoryJSON = "paths/dsg.wpilib.json";
 
         // The driver's controller
         Joystick m_driverController = new Joystick(OIConstants.kDriverControllerPort);
@@ -108,21 +115,25 @@ public class RobotContainer {
                                 // Start at the origin facing the +X direction
                                 new Pose2d(0, 0, new Rotation2d(0)),
                                 // Pass through these two interior waypoints, making an 's' curve path
-                                List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
+                                List.of(new Translation2d(1, 0), new Translation2d(2, 0)),
                                 // End 3 meters straight ahead of where we started, facing forward
-                                new Pose2d(3, 0, new Rotation2d(Units.degreesToRadians(0))),
+                                new Pose2d(3, 0, new Rotation2d(Units.degreesToRadians(90))),
                                 // )
                                 // Pass config
                                 config);
 
-                SmartDashboard.putNumber("xrc", m_robotDrive.getPose().getX());
-                SmartDashboard.putNumber("yrc", m_robotDrive.getPose().getY());
-                SmartDashboard.putNumber("anglerc", m_robotDrive.getPose().getRotation().getDegrees());
-                double a = 1;
-                a = a + 1;
-                SmartDashboard.putNumber("idkrc", a);
+                Trajectory trajectory = new Trajectory();
+
+                try {
+                        Path trajectoryPath = Filesystem.getDeployDirectory().toPath().resolve(trajectoryJSON);
+                        trajectory = TrajectoryUtil.fromPathweaverJson(trajectoryPath);
+                } catch (IOException ex) {
+                        DriverStation.reportError("Unable to open trajectory: " + trajectoryJSON,
+                                        ex.getStackTrace());
+                }
+
                 RamseteCommand ramseteCommand = new RamseteCommand(
-                                exampleTrajectory,
+                                trajectory,
                                 m_robotDrive::getPose,
                                 new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
                                 new SimpleMotorFeedforward(
@@ -141,7 +152,6 @@ public class RobotContainer {
                 m_robotDrive.resetOdometry(exampleTrajectory.getInitialPose());
 
                 // Run path following command, then stop at the end.
-                return ramseteCommand;
-                // .andThen(() -> m_robotDrive.tankDriveVolts(0, 0))
+                return ramseteCommand.andThen(() -> m_robotDrive.tankDriveVolts(0, 0));
         }
 }

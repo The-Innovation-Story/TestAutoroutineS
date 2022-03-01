@@ -43,10 +43,10 @@ public final class Constants {
     // values for your robot.
     public static final double ksVolts = 0.12356;
     public static final double kvVoltSecondsPerMeter = 1.35;
-    public static final double kaVoltSecondsSquaredPerMeter = 0.34;
+    public static final double kaVoltSecondsSquaredPerMeter = 0.11792;
 
     // Example value only - as above, this must be tuned for your drive!
-    public static final double kPDriveVel = 1.827;
+    public static final double kPDriveVel = 1.227;
     // public static final double kDDriveVel = 4.7314;
     public static final int neoCountsPerRevolution = 42;
     public static final int FR_ID = 12;
@@ -68,7 +68,7 @@ public final class Constants {
 
   public static final class AutoConstants {
     public static final double kMaxSpeedMetersPerSecond = 0.5;
-    public static final double kMaxAccelerationMetersPerSecondSquared = 0.01;
+    public static final double kMaxAccelerationMetersPerSecondSquared = 0.2;
 
     // Reasonable baseline values for a RAMSETE follower in units of meters and
     // seconds
